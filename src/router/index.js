@@ -11,6 +11,11 @@ const routes = [
     component: Home
   },
   {
+    path: '/questRoom/:id',
+    name: 'QuestRoomDetail',
+    component: () => import('../views/QuestRoomDetail.vue')
+  },
+  {
     path: '/about',
     name: 'About',
     // route level code-splitting
