@@ -22,7 +22,8 @@
             <!-- Отображение квест-линий -->
             <quest-line v-for="line in group" :key="line.id" :line="line" :userId="userId" :questRoomId="questRoomId"
               @edit-quest="editQuest" @remove-quest="removeQuest" @removeQuestLine="removeQuestLine"
-              @updateQuestLine="updateQuestLine" @refreshQuestLines="refreshQuestLines" :allQLs="questLines" :forceUpdateInnerQuestLines="forceUpdateInnerQuestLines"></quest-line>
+              @updateQuestLine="updateQuestLine" @refreshQuestLines="refreshQuestLines" :allQLs="questLines"
+              :forceUpdateInnerQuestLines="forceUpdateInnerQuestLines" :forceUnfoldAll="forceUnfoldAll"></quest-line>
           </v-col>
 
           <!-- Кнопка добавления новой квест-линии между группами -->
@@ -64,12 +65,13 @@
 </template>
 
 <script>
-import fire from '@/main';
+import { fire } from '@/main';
 import QuestLine from './QuestLine.vue';
 export default {
   props: {
     questRoomId: String,
-    userId: String
+    userId: String,
+    forceUnfoldAll: Boolean
   },
   data() {
     return {
@@ -138,6 +140,11 @@ export default {
       const newLineRef = questLinesRef.push();
       await newLineRef.set(line);
       this.checkAndFixOrder() //проверяем и исправляем ордера
+      //update questRoom lastUpdatedAt
+      const questRoomRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}`);
+      await questRoomRef.update({
+        lastUpdatedAt: Date.now()
+      });
       this.loaded = true;
     },
     /*
@@ -182,6 +189,11 @@ export default {
       const questLinesRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}/questLines`);
       const lineRef = questLinesRef.child(id);
       await lineRef.remove();
+      //update questRoom lastUpdatedAt
+      const questRoomRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}`);
+      await questRoomRef.update({
+        lastUpdatedAt: Date.now()
+      });
       this.loaded = true;
     },
     async updateQuestLine(line) {
@@ -194,6 +206,11 @@ export default {
       await lineRef.update({
         name: line.name,
         order: line.order,
+        lastUpdatedAt: Date.now()
+      });
+      //update questRoom lastUpdatedAt
+      const questRoomRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}`);
+      await questRoomRef.update({
         lastUpdatedAt: Date.now()
       });
       this.loaded = true;

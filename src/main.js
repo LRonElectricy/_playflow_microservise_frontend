@@ -10,6 +10,12 @@ import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import 'firebase/compat/database'
 
+//socket.io
+import io from 'socket.io-client';
+
+//socket.io
+const socket = io('http://localhost:3000');
+
 const firebaseConfig = {
   apiKey: "AIzaSyDMaX2bDL4on35RNgo_UbKiwJZDl1iKZN4",
   authDomain: "playflow-microservises.firebaseapp.com",
@@ -51,4 +57,4 @@ firebase.auth().onAuthStateChanged(user => {
   }
 });
 
-export default fire;
+export { fire, socket };

@@ -123,7 +123,7 @@
   
 <script>
 import Quest from './Quest.vue';
-import fire from '@/main';
+import { fire } from '@/main';
 
 export default {
     components: {
@@ -135,6 +135,7 @@ export default {
         userId: String,
         allQLs: Array,
         forceUpdateInnerQuestLines: Boolean, // if true, force update inner quest lines
+        forceUnfoldAll: Boolean // if true, force unfold all quests and quest lines
     },
     data() {
         return {
@@ -243,11 +244,16 @@ export default {
             const quest = {
                 id: questId,
                 name: this.newQuestName,
-                order: order,
+                order: parseInt(order),
                 createdAt: Date.now(),
                 lastUpdatedAt: Date.now()
             };
             await questRef.set(quest);
+            // update questRoom.lastUpdatedAt
+            const questRoomRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}`);
+            await questRoomRef.update({
+                lastUpdatedAt: Date.now()
+            });
         },
         async addQuestAndOrder(order) {
             //first, chech if there are quests with order >= order
@@ -354,13 +360,23 @@ export default {
             const db = fire.database();
             const questRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}/questLines/${this.line.id}/quests/${id}`);
             questRef.remove();
+            // update questRoom.lastUpdatedAt
+            const questRoomRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}`);
+            questRoomRef.update({
+                lastUpdatedAt: Date.now()
+            });
         },
-        editQuest(id, quest) {
+        async editQuest(id, quest) {
             // update quest in db, before updating, put firstLoad to true
             this.firstLoad = true;
             const db = fire.database();
             const questRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}/questLines/${this.line.id}/quests/${id}`);
-            questRef.update(quest);
+            await questRef.update(quest);
+            // update questRoom.lastUpdatedAt
+            const questRoomRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}`);
+            await questRoomRef.update({
+                lastUpdatedAt: Date.now()
+            });
         },
         async editAndMoveQuest(id, quest, newQLid) {
             console.log("editAndMoveQuest");
@@ -377,6 +393,11 @@ export default {
             const newQuestRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}/questLines/${newQLid}/quests/${id}`);
             await newQuestRef.set(quest);
             await this.loadQuests();
+            // update questRoom.lastUpdatedAt
+            const questRoomRef = db.ref(`users/${this.userId}/questRooms/${this.questRoomId}`);
+            await questRoomRef.update({
+                lastUpdatedAt: Date.now()
+            });
             this.$emit('refreshQuestLines');
 
         },
@@ -390,6 +411,9 @@ export default {
             console.log("forceUpdateInnerQuestLines");
             this.firstLoad = true;
             this.loadQuests();
+        },
+        forceUnfoldAll(newVal) {
+            this.folded = !newVal;
         }
     }
 };
